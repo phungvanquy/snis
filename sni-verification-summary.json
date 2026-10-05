@@ -1,15 +1,18 @@
 {
-  "exported_utc": "2026-10-05T13:58:06+00:00",
+  "exported_utc": "2026-10-05T15:21:30+00:00",
   "source_ru_domains": 21421,
-  "checked_unique_hosts": 35668,
-  "tls_13_h2_valid_certificate_hosts": 14119,
-  "selected_hosts": 8509,
-  "new_hosts": 8479,
-  "previous_hosts_retained": 30,
+  "checked_unique_hosts": 36425,
+  "tls_13_h2_valid_certificate_hosts": 13445,
+  "selected_hosts": 7601,
+  "new_hosts": 7573,
+  "previous_hosts_retained": 28,
   "previous_hosts_excluded": [
+    "auto.ru",
+    "rutube.ru",
     "www.avito.ru"
   ],
   "x25519_checked": true,
   "source": "https://netapi.com/top-websites/ru/download/",
-  "source_license": "CC BY 4.0"
+  "source_license": "CC BY 4.0",
+  "verification_origin": "GitHub Actions ubuntu-latest hosted runner"
 }

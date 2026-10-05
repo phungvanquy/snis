@@ -1,8 +1,8 @@
 Russian REALITY SNI candidates
-Exported: 2026-10-05T13:58:06+00:00
+Exported: 2026-10-05T15:21:30+00:00
 
-Selected: 8509 unique hostnames
-Checked: 35668 unique hostnames
+Selected: 7601 unique hostnames
+Checked: 36425 unique hostnames
 Source dataset: 21421 .ru domains, plus earlier candidates
 
 Selection requirements:
@@ -16,14 +16,15 @@ Selection requirements:
 Scope and interpretation:
 - Every base hostname in the downloaded .ru dataset was considered.
 - A www hostname is additionally tried when the base hostname fails selection.
-- Additional subdomains of source domains were discovered through redirects
-  and checked with the same criteria.
-- A single retry was made for a snapshot of transient failures.
+- Previous selected hostnames are also checked, retaining discovered subdomains
+  only when they pass the current measurements.
+- The initial snapshot included extra redirect discovery and transient retries;
+  daily refreshes perform fresh checks of source domains and existing candidates.
 - At most two resolved public IPv4 addresses are tried per hostname.
 - TCP connection failures for a shared IP are cached for up to 10 minutes;
   names skipped for that reason are excluded from the selected list.
 - TLS/HTTP behavior can differ by address, time, location, or client fingerprint.
-- Checks ran from this workspace network, not the user's VPS or Russian ISP.
+- Verification origin: GitHub Actions ubuntu-latest hosted runner. Results depend on this network location.
 - A full authenticated VLESS/REALITY connection was not tested.
 - A .ru suffix does not establish Russian ownership, hosting, or ISP allowlisting.
 - HTTP/2 application traffic, site content/reputation, OCSP stapling, and
