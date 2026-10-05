@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Export checked SNI candidates and their verification results."""
 
+import argparse
 import csv
 import datetime
 import json
@@ -11,14 +12,19 @@ BASE = Path(__file__).resolve().parent
 
 
 def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--directory", type=Path, default=BASE)
+    parser.add_argument("--origin", default="the machine running the checker")
+    args = parser.parse_args()
+    base = args.directory
     results = {}
-    for line in (BASE / "sni-verification.jsonl").read_text().splitlines():
+    for line in (base / "sni-verification.jsonl").read_text().splitlines():
         if line.strip():
             row = json.loads(line)
             results[row["host"]] = row
-    with (BASE / "russian-sni-source.csv").open(newline="") as source:
+    with (base / "russian-sni-source.csv").open(newline="") as source:
         ranks = {row["Domain"]: int(row["Rank"]) for row in csv.DictReader(source)}
-    previous = (BASE / "russian-reality-snis.original.txt").read_text().splitlines()
+    previous = (base / "russian-reality-snis.original.txt").read_text().splitlines()
     previous_order = {host: index for index, host in enumerate(previous)}
 
     def rank_for(host):
@@ -40,7 +46,7 @@ def main():
         and row.get("alpn") == "h2" and row.get("certificate_valid")
         and row.get("http_status") == 200
     ), key=sort_key)
-    key_checks_path = BASE / "sni-x25519-verification.jsonl"
+    key_checks_path = base / "sni-x25519-verification.jsonl"
     key_checks = {}
     if key_checks_path.exists():
         for line in key_checks_path.read_text().splitlines():
@@ -49,7 +55,7 @@ def main():
         hosts = [host for host in hosts if key_checks.get(host, {}).get("passed")
                  and key_checks[host]["ip"] == results[host]["ip"]]
     passed = set(hosts)
-    target = BASE / "russian-reality-snis.txt"
+    target = base / "russian-reality-snis.txt"
     temporary = target.with_suffix(".txt.tmp")
     temporary.write_text("\n".join(hosts) + "\n")
     temporary.replace(target)
@@ -60,7 +66,7 @@ def main():
         "same_host_redirects", "handshake_ms", "checked_utc", "cert_expires",
         "reason", "location",
     ]
-    with (BASE / "sni-verification.csv").open("w", newline="") as output:
+    with (base / "sni-verification.csv").open("w", newline="") as output:
         writer = csv.DictWriter(output, fieldnames=fields)
         writer.writeheader()
         for host in sorted(results, key=sort_key):
@@ -102,9 +108,10 @@ def main():
         "x25519_checked": bool(key_checks),
         "source": "https://netapi.com/top-websites/ru/download/",
         "source_license": "CC BY 4.0",
+        "verification_origin": args.origin,
     }
-    (BASE / "sni-verification-summary.json").write_text(json.dumps(summary, indent=2) + "\n")
-    (BASE / "sni-verification-notes.txt").write_text(
+    (base / "sni-verification-summary.json").write_text(json.dumps(summary, indent=2) + "\n")
+    (base / "sni-verification-notes.txt").write_text(
         f"Russian REALITY SNI candidates\nExported: {now}\n\n"
         f"Selected: {len(hosts)} unique hostnames\n"
         f"Checked: {len(results)} unique hostnames\n"
@@ -119,14 +126,15 @@ def main():
         + "\nScope and interpretation:\n"
         "- Every base hostname in the downloaded .ru dataset was considered.\n"
         "- A www hostname is additionally tried when the base hostname fails selection.\n"
-        "- Additional subdomains of source domains were discovered through redirects\n"
-        "  and checked with the same criteria.\n"
-        "- A single retry was made for a snapshot of transient failures.\n"
+        "- Previous selected hostnames are also checked, retaining discovered subdomains\n"
+        "  only when they pass the current measurements.\n"
+        "- The initial snapshot included extra redirect discovery and transient retries;\n"
+        "  daily refreshes perform fresh checks of source domains and existing candidates.\n"
         "- At most two resolved public IPv4 addresses are tried per hostname.\n"
         "- TCP connection failures for a shared IP are cached for up to 10 minutes;\n"
         "  names skipped for that reason are excluded from the selected list.\n"
         "- TLS/HTTP behavior can differ by address, time, location, or client fingerprint.\n"
-        "- Checks ran from this workspace network, not the user's VPS or Russian ISP.\n"
+        f"- Verification origin: {args.origin}. Results depend on this network location.\n"
         "- A full authenticated VLESS/REALITY connection was not tested.\n"
         "- A .ru suffix does not establish Russian ownership, hosting, or ISP allowlisting.\n"
         "- HTTP/2 application traffic, site content/reputation, OCSP stapling, and\n"

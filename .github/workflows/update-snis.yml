@@ -1,0 +1,89 @@
+name: Update SNI snapshot
+
+on:
+  schedule:
+    - cron: '17 3 * * *'
+  workflow_dispatch:
+    inputs:
+      min_retained_ratio:
+        description: 'Minimum candidate count as a fraction of the previous snapshot (0 to 1)'
+        required: true
+        default: '0.5'
+        type: string
+  push:
+    branches: [main]
+    paths:
+      - '**.py'
+      - '.github/workflows/update-snis.yml'
+  pull_request:
+    paths:
+      - '**.py'
+      - '.github/workflows/update-snis.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: '3.12'
+      - name: Test snapshot validation and failure handling
+        run: python -m unittest discover -s tests -v
+
+  refresh:
+    if: >-
+      github.repository == 'phungvanquy/snis' &&
+      (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') &&
+      github.ref_name == github.event.repository.default_branch
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    permissions:
+      contents: write
+    concurrency:
+      group: sni-daily-refresh
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: '3.12'
+      - name: Download source and verify a fresh snapshot
+        env:
+          MIN_RETAINED_RATIO: ${{ inputs.min_retained_ratio || '0.5' }}
+        run: >-
+          python refresh_snis.py --stage-dir refresh-output
+          --min-retained-ratio "$MIN_RETAINED_RATIO"
+          --origin "GitHub Actions ubuntu-latest hosted runner"
+      - name: Commit and push changed snapshot files
+        env:
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- russian-reality-snis.txt russian-sni-source.csv \
+            sni-verification.jsonl sni-x25519-verification.jsonl \
+            sni-verification.csv sni-verification-summary.json sni-verification-notes.txt
+          if git diff --cached --quiet; then
+            echo 'Snapshot unchanged; no commit needed.'
+            exit 0
+          fi
+          git commit -m "Refresh verified SNI snapshot ($(date -u +%F))"
+          git push origin "HEAD:$DEFAULT_BRANCH"
+      - name: Keep scan results for diagnostics
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: sni-refresh-${{ github.run_id }}-${{ github.run_attempt }}
+          path: refresh-output/
+          if-no-files-found: ignore
+          retention-days: 7
