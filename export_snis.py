@@ -129,7 +129,7 @@ def main():
         "- Previous selected hostnames are also checked, retaining discovered subdomains\n"
         "  only when they pass the current measurements.\n"
         "- The initial snapshot included extra redirect discovery and transient retries;\n"
-        "  daily refreshes perform fresh checks of source domains and existing candidates.\n"
+        "  scheduled refreshes perform fresh checks of source domains and existing candidates.\n"
         "- At most two resolved public IPv4 addresses are tried per hostname.\n"
         "- TCP connection failures for a shared IP are cached for up to 10 minutes;\n"
         "  names skipped for that reason are excluded from the selected list.\n"

@@ -2,6 +2,7 @@ name: Update SNI snapshot
 
 on:
   schedule:
+    # A lightweight daily check permits a full refresh every three UTC calendar days.
     - cron: '17 3 * * *'
   workflow_dispatch:
     inputs:
@@ -27,19 +28,49 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    outputs:
+      refresh_due: ${{ steps.schedule.outputs.refresh_due }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
+      - name: Check whether the three-day refresh is due
+        id: schedule
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          python3 - <<'PY'
+          from datetime import datetime, timedelta, timezone
+          import json
+          import os
+          from pathlib import Path
+
+          due = True
+          if os.environ["EVENT_NAME"] == "schedule":
+              summary = json.loads(Path("sni-verification-summary.json").read_text())
+              last_refresh = datetime.fromisoformat(summary["exported_utc"]).astimezone(timezone.utc).date()
+              next_refresh = last_refresh + timedelta(days=3)
+              today = datetime.now(timezone.utc).date()
+              due = today >= next_refresh
+              print(f"Last successful refresh: {last_refresh}; next due: {next_refresh} UTC")
+          else:
+              print("Manual runs and code checks bypass the three-day wait.")
+          with open(os.environ["GITHUB_OUTPUT"], "a") as output:
+              output.write(f"refresh_due={str(due).lower()}\n")
+          print(f"Refresh due: {due}")
+          PY
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        if: steps.schedule.outputs.refresh_due == 'true'
         with:
           python-version: '3.12'
       - name: Test snapshot validation and failure handling
+        if: steps.schedule.outputs.refresh_due == 'true'
         run: python -m unittest discover -s tests -v
 
   refresh:
     if: >-
       github.repository == 'phungvanquy/snis' &&
+      needs.validate.outputs.refresh_due == 'true' &&
       (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') &&
       github.ref_name == github.event.repository.default_branch
     needs: validate

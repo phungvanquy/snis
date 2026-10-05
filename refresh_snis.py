@@ -55,7 +55,7 @@ def download_source(previous_count):
     for attempt in range(3):
         try:
             request = urllib.request.Request(SOURCE_URL, headers={
-                "User-Agent": "snis-daily-refresh/1.0 (+https://github.com/phungvanquy/snis)",
+                "User-Agent": "snis-refresh/1.0 (+https://github.com/phungvanquy/snis)",
             })
             with urllib.request.urlopen(request, timeout=30) as response:
                 data = response.read(10_000_001)
