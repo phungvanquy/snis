@@ -1,0 +1,47 @@
+Russian REALITY SNI candidates
+Exported: 2026-10-05T13:58:06+00:00
+
+Selected: 8509 unique hostnames
+Checked: 35668 unique hostnames
+Source dataset: 21421 .ru domains, plus earlier candidates
+
+Selection requirements:
+- Public IPv4 HTTPS service on TCP port 443.
+- Successful TLS 1.3 handshake with normal certificate-chain and hostname verification.
+- HTTP/2 selected through ALPN (h2).
+- HTTP 200 from a separate HTTP/1.1 GET, after at most two HTTPS redirects
+  within the same hostname. Captcha/challenge redirect paths are not followed.
+- Separate verified TLS 1.3 handshake using X25519 only.
+
+Scope and interpretation:
+- Every base hostname in the downloaded .ru dataset was considered.
+- A www hostname is additionally tried when the base hostname fails selection.
+- Additional subdomains of source domains were discovered through redirects
+  and checked with the same criteria.
+- A single retry was made for a snapshot of transient failures.
+- At most two resolved public IPv4 addresses are tried per hostname.
+- TCP connection failures for a shared IP are cached for up to 10 minutes;
+  names skipped for that reason are excluded from the selected list.
+- TLS/HTTP behavior can differ by address, time, location, or client fingerprint.
+- Checks ran from this workspace network, not the user's VPS or Russian ISP.
+- A full authenticated VLESS/REALITY connection was not tested.
+- A .ru suffix does not establish Russian ownership, hosting, or ISP allowlisting.
+- HTTP/2 application traffic, site content/reputation, OCSP stapling, and
+  post-quantum key exchange were not assessed.
+- Existing candidates are first; additions follow the dataset's relative rank.
+- Different hostnames may share an IP or infrastructure.
+
+Sources and attribution:
+NetAPI: https://netapi.com/
+Dataset: https://netapi.com/top-websites/ru/download/
+Dataset description: https://netapi.com/ru/top-websites/ru/
+License: Creative Commons Attribution 4.0 (CC BY 4.0)
+https://creativecommons.org/licenses/by/4.0/
+The source was filtered and supplemented with live network measurements
+and www hostname variants. NetAPI does not endorse these recommendations.
+REALITY target guidance: https://github.com/XTLS/REALITY/blob/main/README.en.md
+
+To repeat the first-stage checks from a VPS using Python 3.11+:
+python3 verify_snis.py --dataset russian-sni-source.csv --previous russian-reality-snis.original.txt --output sni-verification.jsonl
+python3 verify_x25519.py --input sni-verification.jsonl --output sni-x25519-verification.jsonl
+python3 export_snis.py
