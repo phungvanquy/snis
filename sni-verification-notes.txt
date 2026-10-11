@@ -1,9 +1,9 @@
 Russian REALITY SNI candidates
-Exported: 2026-10-08T11:06:39+00:00
+Exported: 2026-10-11T10:29:57+00:00
 
-Selected: 7961 unique hostnames
-Checked: 34874 unique hostnames
-Source dataset: 20499 .ru domains, plus earlier candidates
+Selected: 8328 unique hostnames
+Checked: 34390 unique hostnames
+Source dataset: 20286 .ru domains, plus earlier candidates
 
 Selection requirements:
 - Public IPv4 HTTPS service on TCP port 443.
