@@ -1,15 +1,17 @@
 {
-  "exported_utc": "2026-10-11T10:29:57+00:00",
-  "source_ru_domains": 20286,
-  "checked_unique_hosts": 34390,
-  "tls_13_h2_valid_certificate_hosts": 13741,
-  "selected_hosts": 8328,
-  "new_hosts": 8300,
-  "previous_hosts_retained": 28,
+  "exported_utc": "2026-10-14T09:20:28+00:00",
+  "source_ru_domains": 19639,
+  "checked_unique_hosts": 34727,
+  "tls_13_h2_valid_certificate_hosts": 13640,
+  "selected_hosts": 8536,
+  "new_hosts": 8510,
+  "previous_hosts_retained": 26,
   "previous_hosts_excluded": [
     "auto.ru",
     "rutube.ru",
-    "www.kp.ru"
+    "vc.ru",
+    "www.avito.ru",
+    "www.okko.tv"
   ],
   "x25519_checked": true,
   "source": "https://netapi.com/top-websites/ru/download/",
